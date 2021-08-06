@@ -29,10 +29,6 @@ impl<'a, T: Candidate + Clone + 'a> SPopulation<T> {
         SPopulation(candidates)
     }
 
-    fn random() -> T {
-        T::random()
-    }
-
     fn size(&self) -> usize {
         let SPopulation(v) = self;
 
@@ -106,8 +102,8 @@ trait Population<'a> {
     fn size(&self) -> usize;
 }
 
-struct VecFittest<C: Candidate> {
-    v: Vec<C>,
+struct VecFittest<'a, C: Candidate> {
+    v: &'a [C],
     i: usize
 }
 
@@ -129,34 +125,47 @@ fn select<'a, C: Candidate + Copy>(p: &'a SPopulation<C>) -> SPopulation<C> {
     p.fittest().take(30).collect()
 }
 
-fn new_generation<C: Candidate + Copy>(older: SPopulation<C>) -> SPopulation<C> {
-    let mut rng = thread_rng();
 
-    let new_size = older.size();
-    let mut result = SPopulation::new(0);
+struct GenAlg<C: Candidate> {
+    random_size: usize,
+    fittest_size: usize,
+    fittest_mutated_size: usize,
+    older: SPopulation<C>
+}
 
-    let selected = select(&older);
 
-    result.extend((0..5).into_iter().map(|_| SPopulation::random()));
-    result.extend(selected.fittest().take(5));
-    result.extend(selected.iter().choose_multiple(&mut rng, 5).iter().map(|x| x.mutate()));
+impl<C: Candidate + Clone + Copy> Iterator for GenAlg<C> {
+    type Item = SPopulation<C>;
 
-    for _ in 16..=new_size {
-        let older_candidate = older.iter().choose(&mut rng).unwrap();
-        let selected_candidate = selected.iter().choose(&mut rng).unwrap();
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut rng = thread_rng();
 
-        result.push(older_candidate.reproduce(&selected_candidate));
+        let new_size = self.older.size();
+        let mut result = SPopulation::<C>::new(0);
+
+        let selected = select(&self.older);
+
+        result.extend((0..self.random_size).into_iter().map(|_| C::random()));
+        result.extend(selected.fittest().take(self.fittest_size));
+        result.extend(selected.iter().choose_multiple(&mut rng, self.fittest_mutated_size).iter().map(|x| x.mutate()));
+
+        for _ in (self.random_size + self.fittest_size + self.fittest_mutated_size + 1)..=new_size {
+            let older_candidate = self.older.iter().choose(&mut rng).unwrap();
+            let selected_candidate = selected.iter().choose(&mut rng).unwrap();
+
+            result.push(older_candidate.reproduce(&selected_candidate));
+        }
+
+        self.older = result.clone();
+
+        Some(result)
     }
-
-    result
 }
 
 fn main() {
-    let mut candidates = SPopulation::<f32>::new(30);
+    let genalg = GenAlg::<f32>{random_size: 5, fittest_size: 5, fittest_mutated_size: 5, older: SPopulation::new(30)};
 
-    for _ in 1..100 {
-        candidates = new_generation(candidates);
-
-        println!("{:?}",candidates);
+    for pop in genalg.take(1000) {
+        println!("{:?}", pop);
     }
 }
