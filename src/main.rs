@@ -9,10 +9,10 @@ struct SPopulation<T: Candidate> {
 }
 
 impl<'a, T: Candidate + 'a> SPopulation<T> {
-    fn fittest(&mut self) -> VecFittest<T> {
+    fn fittest(&mut self) -> FittestIter<T> {
         self.v.sort_by(|v, w| v.fitness().partial_cmp(&w.fitness()).unwrap());
 
-        VecFittest{v: &self.v, i: 0}
+        FittestIter{v: &self.v, i: 0}
     }
 
     fn iter(&'a self) -> std::slice::Iter<'a, T> {
@@ -92,13 +92,13 @@ trait Population<'a> {
     fn size(&self) -> usize;
 }
 
-struct VecFittest<'a, C: Candidate> {
+struct FittestIter<'a, C: Candidate> {
     v: &'a [C],
     i: usize
 }
 
 
-impl<'a, C: Candidate + Copy> Iterator for VecFittest<'a, C> {
+impl<'a, C: Candidate + Copy> Iterator for FittestIter<'a, C> {
     type Item = C;
 
     fn next(&mut self) -> Option<Self::Item> {
