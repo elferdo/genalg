@@ -2,35 +2,19 @@ use rand::prelude::*;
 use rand::distributions::Uniform;
 use rand::seq::IteratorRandom;
 use genalg::population::*;
-use std::ops::Deref;
+
 
 #[derive(Clone, Copy, Debug)]
 struct Cand(f32);
 
 
-impl From<f32> for Cand {
-    fn from(x: f32) -> Self {
-        Cand(x)
-    }
-}
-
-impl Deref for Cand {
-    type Target = f32;
-
-    fn deref(&self) -> &Self::Target {
-        let Cand(x) = self;
-
-        x
-    }
-}
-
 impl Candidate for Cand {
     fn fitness(&self) -> f32 {
-        (25.0 - self.powf(2.0)).abs()
+        (25.0 - self.0.powf(2.0)).abs()
     }
 
     fn mutate(self) -> Self {
-        Cand(*self * 1.1)
+        Cand(self.0 * 1.1)
     }
 
     fn random() -> Self {
@@ -41,11 +25,9 @@ impl Candidate for Cand {
     }
 
     fn reproduce(&self, other: &Self) -> Self {
-        Cand((**self + **other) / 2.0)
+        Cand((self.0 + other.0) / 2.0)
     }
 }
-
-
 
 
 fn select<'a, C: Candidate + Copy>(p: &'a mut Population<C>) -> Population<C> {
