@@ -4,41 +4,33 @@ use rand::seq::IteratorRandom;
 use std::iter::FromIterator;
 
 #[derive(Clone, Debug)]
-struct SPopulation<T: Candidate>(Vec<T>);
+struct SPopulation<T: Candidate> {
+    v: Vec<T>
+}
 
-impl<'a, T: Candidate + Clone + 'a> SPopulation<T> {
-    fn fittest(&self) -> VecFittest<T> {
-        let SPopulation(v) = self;
+impl<'a, T: Candidate + 'a> SPopulation<T> {
+    fn fittest(&mut self) -> VecFittest<T> {
+        self.v.sort_by(|v, w| v.fitness().partial_cmp(&w.fitness()).unwrap());
 
-        let mut result = VecFittest{v: v.clone(), i: 0};
-
-        result.v.sort_by(|v, w| v.fitness().partial_cmp(&w.fitness()).unwrap());
-
-        result
+        VecFittest{v: &self.v, i: 0}
     }
 
     fn iter(&'a self) -> std::slice::Iter<'a, T> {
-        let SPopulation(v) = self;
-
-        v.iter()
+        self.v.iter()
     }
 
     fn new(n: usize) -> Self {
         let candidates: Vec<_> = (0..n).map(|_| T::random()).collect();
 
-        SPopulation(candidates)
+        SPopulation{v: candidates}
     }
 
     fn size(&self) -> usize {
-        let SPopulation(v) = self;
-
-        v.len()
+        self.v.len()
     }
 
     fn push(&mut self, c: T) {
-        let SPopulation(v) = self;
-
-        v.push(c);
+        self.v.push(c);
     }
 }
 
@@ -47,16 +39,14 @@ impl<C: Candidate> FromIterator<C> for SPopulation<C> {
     fn from_iter<T: IntoIterator<Item = C>>(i: T) -> SPopulation<C> {
         let v: Vec<_> = i.into_iter().collect();
 
-        SPopulation(v)
+        SPopulation{v: v}
     }
 }
 
 
 impl<C: Candidate> Extend<C> for SPopulation<C> {
     fn extend<T: IntoIterator<Item = C>>(&mut self, e: T) {
-        let SPopulation(v) = self;
-
-        v.extend(e.into_iter());
+        self.v.extend(e.into_iter());
     }
 }
 
@@ -108,7 +98,7 @@ struct VecFittest<'a, C: Candidate> {
 }
 
 
-impl<C: Candidate + Copy> Iterator for VecFittest<C> {
+impl<'a, C: Candidate + Copy> Iterator for VecFittest<'a, C> {
     type Item = C;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -121,7 +111,7 @@ impl<C: Candidate + Copy> Iterator for VecFittest<C> {
 }
 
 
-fn select<'a, C: Candidate + Copy>(p: &'a SPopulation<C>) -> SPopulation<C> {
+fn select<'a, C: Candidate + Copy>(p: &'a mut SPopulation<C>) -> SPopulation<C> {
     p.fittest().take(30).collect()
 }
 
@@ -134,7 +124,7 @@ struct GenAlg<C: Candidate> {
 }
 
 
-impl<C: Candidate + Clone + Copy> Iterator for GenAlg<C> {
+impl<C: Candidate + Copy> Iterator for GenAlg<C> {
     type Item = SPopulation<C>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -143,7 +133,7 @@ impl<C: Candidate + Clone + Copy> Iterator for GenAlg<C> {
         let new_size = self.older.size();
         let mut result = SPopulation::<C>::new(0);
 
-        let selected = select(&self.older);
+        let mut selected = select(&mut self.older);
 
         result.extend((0..self.random_size).into_iter().map(|_| C::random()));
         result.extend(selected.fittest().take(self.fittest_size));
