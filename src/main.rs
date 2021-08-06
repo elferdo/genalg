@@ -8,6 +8,7 @@ struct SPopulation<T: Candidate> {
     v: Vec<T>
 }
 
+
 impl<'a, T: Candidate + 'a> SPopulation<T> {
     fn fittest(&mut self) -> FittestIter<T> {
         self.v.sort_by(|v, w| v.fitness().partial_cmp(&w.fitness()).unwrap());
@@ -131,11 +132,10 @@ impl<C: Candidate + Copy> Iterator for GenAlg<C> {
         let mut rng = thread_rng();
 
         let new_size = self.older.size();
-        let mut result = SPopulation::<C>::new(0);
+        let mut result = SPopulation::<C>::new(self.random_size);
 
         let mut selected = select(&mut self.older);
 
-        result.extend((0..self.random_size).into_iter().map(|_| C::random()));
         result.extend(selected.fittest().take(self.fittest_size));
         result.extend(selected.iter().choose_multiple(&mut rng, self.fittest_mutated_size).iter().map(|x| x.mutate()));
 
@@ -151,6 +151,7 @@ impl<C: Candidate + Copy> Iterator for GenAlg<C> {
         Some(result)
     }
 }
+
 
 fn main() {
     let genalg = GenAlg::<f32>{random_size: 5, fittest_size: 5, fittest_mutated_size: 5, older: SPopulation::new(30)};
