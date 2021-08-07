@@ -32,10 +32,10 @@ fn main() {
     let genalg = GenAlg::<Cand>::new(5, 5, 5);
     let mut solution = Cand(0.0);
 
-    for mut pop in genalg.take(1000) {
+    for pop in genalg.take(1000) {
         println!("{:?}", pop);
 
-        let c: Vec<_> = pop.fittest().take(1).collect();
+        let c: Vec<_> = pop.iter().take(1).copied().collect();
 
         solution = c[0];
     }

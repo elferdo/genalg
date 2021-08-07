@@ -17,12 +17,6 @@ pub struct Population<T: Candidate> {
 
 
 impl<'a, T: Candidate + 'a> Population<T> {
-    pub fn fittest(&mut self) -> FittestIter<T> {
-        self.v.sort_by(|v, w| v.fitness().partial_cmp(&w.fitness()).unwrap());
-
-        FittestIter{v: &self.v, i: 0}
-    }
-
     pub fn iter(&'a self) -> std::slice::Iter<'a, T> {
         self.v.iter()
     }
@@ -32,7 +26,11 @@ impl<'a, T: Candidate + 'a> Population<T> {
 
         let candidates: Vec<_> = (0..n).map(|_| T::random(&mut rng)).collect();
 
-        Population{v: candidates}
+        let mut result = Population{v: candidates};
+
+        result.sort();
+
+        result
     }
 
     pub fn size(&self) -> usize {
@@ -41,6 +39,12 @@ impl<'a, T: Candidate + 'a> Population<T> {
 
     pub fn push(&mut self, c: T) {
         self.v.push(c);
+
+        self.sort();
+    }
+
+    fn sort(&mut self) {
+        self.v.sort_by(|v, w| v.fitness().partial_cmp(&w.fitness()).unwrap());
     }
 }
 
@@ -57,24 +61,7 @@ impl<C: Candidate> FromIterator<C> for Population<C> {
 impl<C: Candidate> Extend<C> for Population<C> {
     fn extend<T: IntoIterator<Item = C>>(&mut self, e: T) {
         self.v.extend(e.into_iter());
-    }
-}
 
-
-pub struct FittestIter<'a, C: Candidate> {
-    v: &'a [C],
-    i: usize
-}
-
-
-impl<'a, C: Candidate + Copy> Iterator for FittestIter<'a, C> {
-    type Item = C;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let result = self.v[self.i];
-
-        self.i += 1;
-
-        Some(result)
+        self.sort()
     }
 }

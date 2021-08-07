@@ -1,8 +1,8 @@
 use crate::population::*;
 use rand::prelude::*;
 
-fn select<'a, C: Candidate + Copy>(p: &'a mut Population<C>) -> Population<C> {
-    p.fittest().take(30).collect()
+fn select<'a, C: Candidate + Copy>(p: &'a Population<C>) -> Population<C> {
+    p.iter().take(30).copied().collect()
 }
 
 
@@ -25,7 +25,7 @@ impl<C: Candidate + Copy> GenAlg<C> {
     }
 
     pub fn solution(&mut self) -> C {
-        let c : Vec<_> = self.older.fittest().take(1).collect();
+        let c : Vec<_> = self.older.iter().take(1).copied().collect();
 
         c[0]
     }
@@ -40,9 +40,9 @@ impl<C: Candidate + Copy> Iterator for GenAlg<C> {
         let new_size = self.older.size();
         let mut result = Population::<C>::new(self.random_size);
 
-        let mut selected = select(&mut self.older);
+        let selected = select(&mut self.older);
 
-        result.extend(selected.fittest().take(self.fittest_size));
+        result.extend(selected.iter().take(self.fittest_size).copied());
         result.extend(selected.iter().choose_multiple(&mut rng, self.fittest_mutated_size).iter().map(|x| x.mutate()));
 
         for _ in (self.random_size + self.fittest_size + self.fittest_mutated_size + 1)..=new_size {
