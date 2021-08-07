@@ -14,7 +14,7 @@ pub struct GenAlg<C: Candidate> {
 }
 
 
-impl<C: Candidate> GenAlg<C> {
+impl<C: Candidate + Copy> GenAlg<C> {
     pub fn new(random_size: usize, fittest_size: usize, fittest_mutated_size: usize) -> Self {
         Self{
             random_size: random_size,
@@ -22,6 +22,12 @@ impl<C: Candidate> GenAlg<C> {
             fittest_mutated_size: fittest_mutated_size,
             older: Population::new(30)
         }
+    }
+
+    pub fn solution(&mut self) -> C {
+        let c : Vec<_> = self.older.fittest().take(1).collect();
+
+        c[0]
     }
 }
 

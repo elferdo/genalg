@@ -3,7 +3,6 @@ use rand::distributions::Uniform;
 use genalg::population::*;
 use genalg::genalg::GenAlg;
 
-
 #[derive(Clone, Copy, Debug)]
 struct Cand(f32);
 
@@ -32,8 +31,15 @@ impl Candidate for Cand {
 
 fn main() {
     let genalg = GenAlg::<Cand>::new(5, 5, 5);
+    let mut solution = Cand(0.0);
 
-    for pop in genalg.take(1000) {
+    for mut pop in genalg.take(1000) {
         println!("{:?}", pop);
+
+        let c: Vec<_> = pop.fittest().take(1).collect();
+
+        solution = c[0];
     }
+
+    println!("Cand(sqrt(25)) ~= {:?}", solution);
 }
