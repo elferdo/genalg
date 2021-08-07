@@ -1,10 +1,11 @@
+use rand::prelude::*;
 use std::iter::FromIterator;
 
 
 pub trait Candidate {
     fn fitness(&self) -> f32;
     fn mutate(self) -> Self;
-    fn random() -> Self;
+    fn random<R: Rng>(rng: &mut R) -> Self;
     fn reproduce(&self, other: &Self) -> Self;
 }
 
@@ -27,7 +28,9 @@ impl<'a, T: Candidate + 'a> Population<T> {
     }
 
     pub fn new(n: usize) -> Self {
-        let candidates: Vec<_> = (0..n).map(|_| T::random()).collect();
+        let mut rng = thread_rng();
+
+        let candidates: Vec<_> = (0..n).map(|_| T::random(&mut rng)).collect();
 
         Population{v: candidates}
     }

@@ -16,11 +16,10 @@ impl Candidate for Cand {
         Cand(self.0 * 1.1)
     }
 
-    fn random() -> Self {
+    fn random<R: Rng>(rng: &mut R) -> Self {
         let d = Uniform::new_inclusive(1.0, 30.0);
-        let mut rng = thread_rng();
 
-        Cand((&mut rng).sample(d))
+        Cand(rng.sample(d))
     }
 
     fn reproduce(&self, other: &Self) -> Self {
